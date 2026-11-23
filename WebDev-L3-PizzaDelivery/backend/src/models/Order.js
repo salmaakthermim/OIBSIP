@@ -2,31 +2,34 @@ import mongoose from 'mongoose';
 
 const orderSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  items: [{
-    pizza: { type: mongoose.Schema.Types.ObjectId, ref: 'Pizza' },
-    name: String,
-    size: String,
-    price: Number,
-    quantity: { type: Number, default: 1 },
-  }],
+
+  // Custom pizza builder selections
+  selectedIngredients: {
+    base: { type: mongoose.Schema.Types.ObjectId, ref: 'Ingredient' },
+    sauce: { type: mongoose.Schema.Types.ObjectId, ref: 'Ingredient' },
+    cheese: { type: mongoose.Schema.Types.ObjectId, ref: 'Ingredient' },
+    vegetables: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Ingredient' }],
+  },
+
+  quantity: { type: Number, default: 1, min: 1 },
   totalAmount: { type: Number, required: true },
-  deliveryAddress: {
-    street: String,
-    city: String,
-    zip: String,
-  },
-  status: {
+
+  orderStatus: {
     type: String,
-    enum: ['pending', 'confirmed', 'preparing', 'out-for-delivery', 'delivered', 'cancelled'],
-    default: 'pending',
+    enum: ['Order Received', 'In Kitchen', 'Sent to Delivery'],
+    default: 'Order Received',
   },
+
   paymentStatus: {
     type: String,
-    enum: ['pending', 'paid', 'failed', 'refunded'],
+    enum: ['pending', 'paid', 'failed'],
     default: 'pending',
   },
   paymentId: { type: String },
   razorpayOrderId: { type: String },
+
+  // Prevent double stock deduction
+  stockDeducted: { type: Boolean, default: false },
 }, { timestamps: true });
 
 export default mongoose.model('Order', orderSchema);

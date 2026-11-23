@@ -7,33 +7,47 @@ import connectDB from './src/config/db.js';
 import authRoutes from './src/routes/authRoutes.js';
 import pizzaRoutes from './src/routes/pizzaRoutes.js';
 import orderRoutes from './src/routes/orderRoutes.js';
+import ingredientRoutes from './src/routes/ingredientRoutes.js';
+import adminRoutes from './src/routes/adminRoutes.js';
+import { seedDatabase } from './src/utils/seedData.js';
+import { startStockCheckJob } from './src/jobs/stockCheck.js';
 
 dotenv.config();
-connectDB();
+connectDB().then(() => seedDatabase());
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: { origin: process.env.CLIENT_URL, methods: ['GET', 'POST'] },
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+  },
 });
 
-app.use(cors({ origin: process.env.CLIENT_URL }));
+app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173' }));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/pizzas', pizzaRoutes);
+app.use('/api/ingredients', ingredientRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/admin', adminRoutes);
 
-app.get('/', (req, res) => res.json({ message: 'PizzaHub API running' }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', message: 'PizzaHub API running' }));
 
+// Socket.IO
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
+  socket.on('joinOrderRoom', (orderId) => socket.join(`order_${orderId}`));
   socket.on('disconnect', () => console.log('Client disconnected:', socket.id));
 });
 
-// Make io accessible in controllers
 app.set('io', io);
+
+// Start cron job
+startStockCheckJob();
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));

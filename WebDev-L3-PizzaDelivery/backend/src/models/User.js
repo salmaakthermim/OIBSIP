@@ -7,11 +7,15 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true, minlength: 6 },
   phone: { type: String },
   role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
-  address: [{
-    street: String,
-    city: String,
-    zip: String,
-  }],
+
+  // Email verification
+  isEmailVerified: { type: Boolean, default: false },
+  emailVerificationToken: { type: String },
+  emailVerificationExpires: { type: Date },
+
+  // Forgot password
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
