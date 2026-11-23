@@ -46,17 +46,24 @@ export default function PizzaBuilder() {
   const handleSingleSelect = (category, item) => {
     if (item.stock < 1) { toast.error(`${item.name} is out of stock!`); return }
     setSelection(prev => ({ ...prev, [category]: item }))
+    toast.success(`${item.name} সিলেক্ট করা হয়েছে! ✓`, { id: 'ing-select', duration: 1800 })
   }
 
   const handleVegetableToggle = (item) => {
     if (item.stock < 1) { toast.error(`${item.name} is out of stock!`); return }
     setSelection(prev => {
       const exists = prev.vegetables.find(v => v._id === item._id)
+      const updated = exists
+        ? prev.vegetables.filter(v => v._id !== item._id)
+        : [...prev.vegetables, item]
+      if (exists) {
+        toast(`Removed ${item.name}`, { id: 'ing-select', duration: 1200 })
+      } else {
+        toast.success(`Added ${item.name}! ✓`, { id: 'ing-select', duration: 1500 })
+      }
       return {
         ...prev,
-        vegetables: exists
-          ? prev.vegetables.filter(v => v._id !== item._id)
-          : [...prev.vegetables, item],
+        vegetables: updated,
       }
     })
   }
@@ -69,8 +76,22 @@ export default function PizzaBuilder() {
   }
 
   const handleNext = () => {
-    if (step < 3) setStep(s => s + 1)
-    else {
+    if (step === 0 && !selection.base) {
+      toast.error('অনুগ্রহ করে প্রথমে যেকোনো ১টি Pizza Base (Crust) কার্ডে ক্লিক করে সিলেক্ট করুন! 🍞', { id: 'step-req' })
+      return
+    }
+    if (step === 1 && !selection.sauce) {
+      toast.error('অনুগ্রহ করে প্রথমে যেকোনো ১টি Sauce কার্ডে ক্লিক করে সিলেক্ট করুন! 🍅', { id: 'step-req' })
+      return
+    }
+    if (step === 2 && !selection.cheese) {
+      toast.error('অনুগ্রহ করে প্রথমে যেকোনো ১টি Cheese কার্ডে ক্লিক করে সিলেক্ট করুন! 🧀', { id: 'step-req' })
+      return
+    }
+
+    if (step < 3) {
+      setStep(s => s + 1)
+    } else {
       if (!user) {
         toast('Please login to finalize and place your pizza order! 🍕', { icon: '🔐' })
         navigate('/login', { state: { from: '/order-summary', selection, totalPrice: totalPrice() } })
@@ -143,6 +164,27 @@ export default function PizzaBuilder() {
           <span style={{ background: 'rgba(255,77,0,0.1)', color: '#FF4D00', fontSize: 11, fontWeight: 700, letterSpacing: 2, padding: '4px 12px', borderRadius: 20 }}>STEP {step + 1} OF 4</span>
           <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#1A0500', margin: '10px 0 4px' }}>{STEP_ICONS[step]} {STEPS[step]}</h2>
           <p style={{ color: '#888', fontSize: '0.9rem' }}>{STEP_DESCS[step]}</p>
+
+          {!canNext() && (
+            <div style={{
+              background: '#FFF3E0',
+              border: '1.5px solid #FFB74D',
+              color: '#D84315',
+              padding: '10px 20px',
+              borderRadius: 14,
+              textAlign: 'center',
+              fontSize: '0.9rem',
+              fontWeight: 800,
+              marginTop: 14,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              boxShadow: '0 4px 15px rgba(255,140,66,0.15)',
+            }}>
+              <span>👇</span>
+              <span>নিচের যেকোনো ১টি {STEPS[step]} কার্ডে ক্লিক করে পছন্দ করুন</span>
+            </div>
+          )}
         </div>
 
         {/* Ingredient Cards */}
@@ -158,37 +200,59 @@ export default function PizzaBuilder() {
                 key={item._id}
                 onClick={() => !outOfStock && (isVegStep ? handleVegetableToggle(item) : handleSingleSelect(STEPS[step].toLowerCase(), item))}
                 style={{
-                  background: '#fff',
-                  borderRadius: 16, padding: '20px 16px',
+                  background: isSelected ? '#FFF8F4' : '#fff',
+                  borderRadius: 18, padding: '22px 16px',
                   border: `2.5px solid ${isSelected ? '#FF4D00' : outOfStock ? '#EDE0D8' : '#EDE0D8'}`,
-                  boxShadow: isSelected ? '0 6px 24px rgba(255,77,0,0.2)' : '0 2px 12px rgba(0,0,0,0.05)',
+                  boxShadow: isSelected ? '0 8px 28px rgba(255,77,0,0.22)' : '0 2px 12px rgba(0,0,0,0.05)',
                   cursor: outOfStock ? 'not-allowed' : 'pointer',
                   opacity: outOfStock ? 0.5 : 1,
                   transition: 'all 0.25s',
                   textAlign: 'center',
                   position: 'relative',
-                  transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                  transform: isSelected ? 'translateY(-4px) scale(1.02)' : 'translateY(0) scale(1)',
                 }}
-                onMouseEnter={e => { if (!outOfStock && !isSelected) { e.currentTarget.style.borderColor = '#FF8C42'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(255,77,0,0.15)' } }}
+                onMouseEnter={e => { if (!outOfStock && !isSelected) { e.currentTarget.style.borderColor = '#FF8C42'; e.currentTarget.style.boxShadow = '0 6px 22px rgba(255,77,0,0.15)' } }}
                 onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.borderColor = '#EDE0D8'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.05)' } }}
               >
                 {isSelected && (
-                  <div style={{ position: 'absolute', top: 10, right: 10, width: 24, height: 24, background: '#FF4D00', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 800 }}>✓</div>
+                  <div style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, background: '#FF4D00', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13, fontWeight: 900, boxShadow: '0 2px 8px rgba(255,77,0,0.4)' }}>✓</div>
                 )}
                 {outOfStock && (
                   <div style={{ position: 'absolute', top: 8, left: 8, background: '#EF4444', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>OUT OF STOCK</div>
                 )}
-                <div style={{ fontSize: '2.5rem', marginBottom: 10 }}>
+                <div style={{ fontSize: '2.8rem', marginBottom: 10 }}>
                   {step === 0 ? '🍞' : step === 1 ? '🍅' : step === 2 ? '🧀' : '🥦'}
                 </div>
-                <h3 style={{ fontWeight: 800, color: '#1A0500', fontSize: '0.95rem', marginBottom: 4 }}>{item.name}</h3>
+                <h3 style={{ fontWeight: 800, color: '#1A0500', fontSize: '1rem', marginBottom: 4 }}>{item.name}</h3>
                 <p style={{ color: '#aaa', fontSize: '0.75rem', marginBottom: 10, textTransform: 'capitalize' }}>{item.category}</p>
-                <div style={{ background: isSelected ? '#FF4D00' : '#FFF0E6', color: isSelected ? '#fff' : '#FF4D00', padding: '5px 12px', borderRadius: 20, fontWeight: 800, fontSize: '0.85rem', display: 'inline-block' }}>
+                <div style={{ background: isSelected ? '#FF4D00' : '#FFF0E6', color: isSelected ? '#fff' : '#FF4D00', padding: '5px 14px', borderRadius: 20, fontWeight: 800, fontSize: '0.88rem', display: 'inline-block' }}>
                   +৳{item.price}
                 </div>
-                <p style={{ color: item.stock > 20 ? '#10B981' : item.stock > 0 ? '#F59E0B' : '#EF4444', fontSize: '0.72rem', fontWeight: 600, marginTop: 6 }}>
+                <p style={{ color: item.stock > 20 ? '#10B981' : item.stock > 0 ? '#F59E0B' : '#EF4444', fontSize: '0.72rem', fontWeight: 600, marginTop: 8 }}>
                   {item.stock > 20 ? `${item.stock} in stock` : item.stock > 0 ? `Only ${item.stock} left!` : 'Out of stock'}
                 </p>
+
+                {/* Explicit Click Button on Card */}
+                <div style={{ marginTop: 12 }}>
+                  <button
+                    type="button"
+                    disabled={outOfStock}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: 10,
+                      border: isSelected ? 'none' : '1.5px solid #FF4D00',
+                      background: isSelected ? '#FF4D00' : 'transparent',
+                      color: isSelected ? '#fff' : '#FF4D00',
+                      fontWeight: 800,
+                      fontSize: '0.82rem',
+                      cursor: outOfStock ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    {isSelected ? '✓ Selected' : `Select (+৳${item.price})`}
+                  </button>
+                </div>
               </div>
             )
           })}
@@ -217,7 +281,25 @@ export default function PizzaBuilder() {
           <button onClick={() => setStep(s => s - 1)} disabled={step === 0} style={{ padding: '13px 28px', borderRadius: 12, border: '2px solid #EDE0D8', background: '#fff', color: '#888', fontWeight: 700, fontSize: '0.95rem', cursor: step === 0 ? 'not-allowed' : 'pointer', opacity: step === 0 ? 0.5 : 1 }}>
             ← Back
           </button>
-          <button onClick={handleNext} disabled={!canNext()} style={{ flex: 1, maxWidth: 300, padding: '13px 28px', borderRadius: 12, border: 'none', background: canNext() ? 'linear-gradient(135deg,#FF4D00,#FF8C42)' : '#ccc', color: '#fff', fontWeight: 800, fontSize: '0.95rem', cursor: canNext() ? 'pointer' : 'not-allowed', boxShadow: canNext() ? '0 6px 24px rgba(255,77,0,0.35)' : 'none' }}>
+          <button
+            onClick={handleNext}
+            style={{
+              flex: 1,
+              maxWidth: 320,
+              padding: '14px 28px',
+              borderRadius: 12,
+              border: 'none',
+              background: canNext()
+                ? 'linear-gradient(135deg,#FF4D00,#FF8C42)'
+                : 'linear-gradient(135deg,#FFA726,#FFB74D)',
+              color: '#fff',
+              fontWeight: 800,
+              fontSize: '0.95rem',
+              cursor: 'pointer',
+              boxShadow: canNext() ? '0 6px 24px rgba(255,77,0,0.35)' : 'none',
+              transition: 'all 0.25s',
+            }}
+          >
             {step < 3 ? `Next: ${STEPS[step + 1]} →` : 'Review Order →'}
           </button>
         </div>
