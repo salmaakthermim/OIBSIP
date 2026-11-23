@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../firebase/firebase';
 import api from '../utils/api';
 
 const AuthContext = createContext();
@@ -32,9 +34,25 @@ export const AuthProvider = ({ children }) => {
     return data.user;
   };
 
-  const register = async (name, email, password) => {
-    const { data } = await api.post('/auth/register', { name, email, password });
+  const register = async (name, email, password, avatar = '') => {
+    const { data } = await api.post('/auth/register', { name, email, password, avatar });
     return data;
+  };
+
+  const googleSignIn = async () => {
+    const result = await signInWithPopup(auth, googleProvider);
+    const { displayName, email, photoURL, uid } = result.user;
+    const { data } = await api.post('/auth/google-login', {
+      name: displayName || email.split('@')[0],
+      email,
+      avatar: photoURL || '',
+      googleId: uid,
+    });
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+    setUser(data.user);
+    return data.user;
   };
 
   const logout = () => {
@@ -47,7 +65,7 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = user?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, isAdmin }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, register, googleSignIn, logout, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

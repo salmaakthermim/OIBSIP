@@ -9,7 +9,7 @@ const generateToken = (id) =>
 // POST /api/auth/register
 export const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, avatar } = req.body;
 
     if (!name || !email || !password)
       return res.status(400).json({ message: 'All fields are required' });
@@ -33,6 +33,7 @@ export const register = async (req, res) => {
       name,
       email,
       password,
+      avatar: avatar || '',
       isEmailVerified: !emailConfigured, // auto-verify if no email config
       emailVerificationToken: emailConfigured ? verificationToken : undefined,
       emailVerificationExpires: emailConfigured ? verificationExpires : undefined,
@@ -52,7 +53,7 @@ export const register = async (req, res) => {
         : 'Registration successful! You can now login.',
       autoVerified: !emailConfigured,
       token: !emailConfigured ? token : undefined,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, isEmailVerified: user.isEmailVerified },
+      user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar || '', role: user.role, isEmailVerified: user.isEmailVerified },
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -102,6 +103,8 @@ export const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
+        avatar: user.avatar || '',
         role: user.role,
         isEmailVerified: user.isEmailVerified,
       },
@@ -133,6 +136,8 @@ export const adminLogin = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
+        avatar: user.avatar || '',
         role: user.role,
         isEmailVerified: user.isEmailVerified,
       },
@@ -194,9 +199,91 @@ export const getMe = async (req, res) => {
     id: req.user._id,
     name: req.user.name,
     email: req.user.email,
+    phone: req.user.phone,
+    avatar: req.user.avatar || '',
     role: req.user.role,
     isEmailVerified: req.user.isEmailVerified,
+    createdAt: req.user.createdAt,
   });
+};
+
+// PUT /api/auth/profile
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, phone, avatar } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (name) user.name = name.trim();
+    if (phone !== undefined) user.phone = phone.trim();
+    if (avatar !== undefined) user.avatar = avatar.trim();
+
+    await user.save();
+    res.json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      avatar: user.avatar || '',
+      role: user.role,
+      isEmailVerified: user.isEmailVerified,
+      createdAt: user.createdAt,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// POST /api/auth/google-login
+export const googleLogin = async (req, res) => {
+  try {
+    const { name, email, avatar, googleId } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        name: name || email.split('@')[0],
+        email,
+        avatar: avatar || '',
+        googleId: googleId || '',
+        isEmailVerified: true,
+      });
+    } else {
+      let updated = false;
+      if (!user.avatar && avatar) {
+        user.avatar = avatar;
+        updated = true;
+      }
+      if (!user.googleId && googleId) {
+        user.googleId = googleId;
+        updated = true;
+      }
+      if (!user.isEmailVerified) {
+        user.isEmailVerified = true;
+        updated = true;
+      }
+      if (updated) {
+        await user.save({ validateBeforeSave: false });
+      }
+    }
+
+    const token = generateToken(user._id);
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        avatar: user.avatar || '',
+        role: user.role,
+        isEmailVerified: user.isEmailVerified,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 // POST /api/auth/resend-verification

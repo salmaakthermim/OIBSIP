@@ -3,13 +3,22 @@ import { useAuth } from '../context/AuthContext'
 import { useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
+const PRESET_AVATARS = [
+  { label: 'Robot 1', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Panda' },
+  { label: 'Chef 1', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Bella' },
+  { label: 'Chef 2', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Jack' },
+  { label: 'Robot 2', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Oliver' },
+  { label: 'Gourmet', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Mia' },
+]
+
 export default function Register() {
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' })
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '', avatar: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [showPass, setShowPass] = useState(false)
-  const { register } = useAuth()
+  const { register, googleSignIn } = useAuth()
   const navigate = useNavigate()
 
   const strength = getStrength(form.password)
@@ -21,7 +30,7 @@ export default function Register() {
     if (form.password.length < 6) return setError('Password must be at least 6 characters')
     setLoading(true)
     try {
-      const result = await register(form.name, form.email, form.password)
+      const result = await register(form.name, form.email, form.password, form.avatar)
       if (result.autoVerified) {
         // Email not configured — auto verified, store token and redirect
         if (result.token) {
@@ -34,9 +43,25 @@ export default function Register() {
         setSuccess(true)
         toast.success('Account created! Check your email to verify.')
       }
-    } catch (err) {      setError(err.response?.data?.message || 'Registration failed. Try again')
+    } catch (err) {
+      setError(err.response?.data?.message || 'Registration failed. Try again')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    setError('')
+    setGoogleLoading(true)
+    try {
+      const u = await googleSignIn()
+      toast.success(`Welcome to PizzaHub, ${u.name}! 🍕`)
+      const dest = u.role === 'admin' ? '/admin' : '/'
+      navigate(dest)
+    } catch (err) {
+      setError(err.message || 'Google sign-in failed. Please try again.')
+    } finally {
+      setGoogleLoading(false)
     }
   }
 
@@ -92,7 +117,147 @@ export default function Register() {
 
           {error && <div style={{ background: '#FFF0EE', border: '1.5px solid #FFCDC8', color: '#C0392B', padding: '10px 14px', borderRadius: 10, fontSize: '0.85rem', marginBottom: 16 }}>⚠️ {error}</div>}
 
+          {/* Google Sign-in Button */}
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={googleLoading}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              borderRadius: 12,
+              border: '2px solid #EDE0D8',
+              background: '#fff',
+              color: '#1A0500',
+              fontWeight: 700,
+              fontSize: '0.92rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 12,
+              cursor: googleLoading ? 'not-allowed' : 'pointer',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+              transition: 'all 0.2s',
+              marginBottom: 16,
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = '#FF4D00'
+              e.currentTarget.style.background = '#FFF8F3'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = '#EDE0D8'
+              e.currentTarget.style.background = '#fff'
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            {googleLoading ? 'Connecting to Google...' : 'Continue with Google'}
+          </button>
+
+          {/* Divider */}
+          <div style={{ display: 'flex', alignItems: 'center', margin: '14px 0 18px', gap: 12 }}>
+            <div style={{ flex: 1, height: 1, background: '#EDE0D8' }} />
+            <span style={{ color: '#aaa', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase' }}>or register with email</span>
+            <div style={{ flex: 1, height: 1, background: '#EDE0D8' }} />
+          </div>
+
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {/* Avatar Preview & Selection */}
+            <div>
+              <label style={labelStyle}>Profile Picture (Avatar)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
+                <div style={{
+                  width: 54,
+                  height: 54,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg,#FF4D00,#FF8C42)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  border: '2px solid #FF8C42',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 12px rgba(255,77,0,0.25)',
+                }}>
+                  {form.avatar ? (
+                    <img
+                      src={form.avatar}
+                      alt="Avatar Preview"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(e) => { e.currentTarget.src = 'https://api.dicebear.com/7.x/bottts/svg?seed=Panda' }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: 24, color: '#fff', fontWeight: 900 }}>
+                      {form.name ? form.name.charAt(0).toUpperCase() : '🍕'}
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <input
+                    type="url"
+                    placeholder="Paste image URL (optional)"
+                    value={form.avatar}
+                    onChange={e => setForm({ ...form, avatar: e.target.value })}
+                    style={{ ...inputStyle, padding: '10px 14px', fontSize: '0.86rem' }}
+                    onFocus={e => e.target.style.borderColor = '#FF4D00'}
+                    onBlur={e => e.target.style.borderColor = '#EDE0D8'}
+                  />
+                </div>
+              </div>
+
+              {/* Preset Avatars Bar */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+                <span style={{ fontSize: '0.75rem', color: '#888', fontWeight: 600 }}>Presets:</span>
+                {PRESET_AVATARS.map((p, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setForm({ ...form, avatar: p.url })}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      border: form.avatar === p.url ? '2px solid #FF4D00' : '1.5px solid #EDE0D8',
+                      padding: 1,
+                      background: '#fff',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      overflow: 'hidden',
+                      transform: form.avatar === p.url ? 'scale(1.15)' : 'scale(1)',
+                      transition: 'all 0.2s',
+                    }}
+                    title={p.label}
+                  >
+                    <img src={p.url} alt={p.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </button>
+                ))}
+                {form.avatar && (
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, avatar: '' })}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#999',
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      marginLeft: 4,
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div>
               <label style={labelStyle}>Full Name</label>
               <input type="text" placeholder="Your name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required style={inputStyle} onFocus={e => e.target.style.borderColor = '#FF4D00'} onBlur={e => e.target.style.borderColor = '#EDE0D8'} />

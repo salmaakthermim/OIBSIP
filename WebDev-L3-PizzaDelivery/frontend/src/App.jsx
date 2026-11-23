@@ -10,6 +10,7 @@ import ResetPassword from './pages/ResetPassword'
 import PizzaBuilder from './pages/PizzaBuilder'
 import OrderSummary from './pages/OrderSummary'
 import OrderHistory from './pages/OrderHistory'
+import Profile from './pages/Profile'
 import AdminDashboard from './pages/admin/Dashboard'
 import AdminLogin from './pages/admin/AdminLogin'
 import Navbar from './components/Navbar'
@@ -48,6 +49,7 @@ function App() {
           <Route path="/build" element={<PizzaBuilder />} />
           <Route path="/order-summary" element={<OrderSummary />} />
           <Route path="/orders" element={<OrderHistory />} />
+          <Route path="/profile" element={<Profile />} />
 
           {/* Admin */}
           <Route path="/admin/login" element={<AdminLogin />} />
