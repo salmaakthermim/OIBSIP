@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
 export default function Login() {
@@ -9,8 +9,9 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
   const [notVerified, setNotVerified] = useState(false)
-  const { login, isAdmin } = useAuth()
+  const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -20,7 +21,8 @@ export default function Login() {
     try {
       const user = await login(form.email, form.password)
       toast.success(`Welcome back, ${user.name}! 🍕`)
-      navigate(user.role === 'admin' ? '/admin' : '/')
+      const dest = user.role === 'admin' ? '/admin' : (location.state?.from || '/')
+      navigate(dest, { state: location.state })
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed. Try again'
       if (err.response?.data?.notVerified) setNotVerified(true)
@@ -117,9 +119,14 @@ export default function Login() {
             </button>
           </form>
 
-          <p style={{ color: '#aaa', fontSize: '0.8rem', textAlign: 'center', marginTop: 20 }}>
-            Admin? Use <strong style={{ color: '#FF4D00' }}>admin@pizzahub.com</strong>
-          </p>
+          <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #EDE0D8', textAlign: 'center' }}>
+            <p style={{ color: '#888', fontSize: '0.82rem', margin: 0 }}>
+              Administrator?{' '}
+              <Link to="/admin/login" style={{ color: '#FF4D00', fontWeight: 800, textDecoration: 'none' }}>
+                Go to Admin Portal 🛡️
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
 

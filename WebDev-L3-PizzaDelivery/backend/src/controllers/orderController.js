@@ -117,13 +117,18 @@ export const verifyPayment = async (req, res) => {
     order.orderStatus = 'Order Received';
     await order.save();
 
+    const populatedOrder = await Order.findById(order._id)
+      .populate('user', 'name email')
+      .populate('selectedIngredients.base selectedIngredients.sauce selectedIngredients.cheese selectedIngredients.vegetables');
+
     // Emit socket event for real-time update
     const io = req.app.get('io');
     if (io) {
-      io.emit('orderStatusUpdate', { orderId: order._id, status: order.orderStatus });
+      io.emit('orderStatusUpdate', { orderId: order._id, status: order.orderStatus, order: populatedOrder });
+      io.emit('newOrder', populatedOrder);
     }
 
-    res.json({ message: 'Payment verified and order confirmed', order });
+    res.json({ message: 'Payment verified and order confirmed', order: populatedOrder });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -154,10 +159,17 @@ export const mockPayment = async (req, res) => {
     order.orderStatus = 'Order Received';
     await order.save();
 
-    const io = req.app.get('io');
-    if (io) io.emit('orderStatusUpdate', { orderId: order._id, status: order.orderStatus });
+    const populatedOrder = await Order.findById(order._id)
+      .populate('user', 'name email')
+      .populate('selectedIngredients.base selectedIngredients.sauce selectedIngredients.cheese selectedIngredients.vegetables');
 
-    res.json({ message: 'Mock payment successful', order });
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('orderStatusUpdate', { orderId: order._id, status: order.orderStatus, order: populatedOrder });
+      io.emit('newOrder', populatedOrder);
+    }
+
+    res.json({ message: 'Mock payment successful', order: populatedOrder });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -215,14 +227,16 @@ export const updateOrderStatus = async (req, res) => {
       req.params.id,
       { orderStatus: status },
       { new: true }
-    ).populate('user', 'name email');
+    )
+      .populate('user', 'name email')
+      .populate('selectedIngredients.base selectedIngredients.sauce selectedIngredients.cheese selectedIngredients.vegetables');
 
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     // Real-time update via Socket.IO
     const io = req.app.get('io');
     if (io) {
-      io.emit('orderStatusUpdate', { orderId: order._id, status: order.orderStatus });
+      io.emit('orderStatusUpdate', { orderId: order._id, status: order.orderStatus, order });
     }
 
     res.json(order);

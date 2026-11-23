@@ -11,6 +11,7 @@ import PizzaBuilder from './pages/PizzaBuilder'
 import OrderSummary from './pages/OrderSummary'
 import OrderHistory from './pages/OrderHistory'
 import AdminDashboard from './pages/admin/Dashboard'
+import AdminLogin from './pages/admin/AdminLogin'
 import Navbar from './components/Navbar'
 
 const NO_NAVBAR_ROUTES = ['/admin']
@@ -49,6 +50,7 @@ function App() {
           <Route path="/orders" element={<OrderHistory />} />
 
           {/* Admin */}
+          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
 
           {/* 404 */}

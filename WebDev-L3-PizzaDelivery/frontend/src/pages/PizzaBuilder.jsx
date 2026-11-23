@@ -22,7 +22,6 @@ export default function PizzaBuilder() {
   const [selection, setSelection] = useState({ base: null, sauce: null, cheese: null, vegetables: [] })
 
   useEffect(() => {
-    if (!user) { navigate('/login'); return }
     api.get('/ingredients').then(res => {
       const all = res.data
       setIngredients({
@@ -72,6 +71,11 @@ export default function PizzaBuilder() {
   const handleNext = () => {
     if (step < 3) setStep(s => s + 1)
     else {
+      if (!user) {
+        toast('Please login to finalize and place your pizza order! 🍕', { icon: '🔐' })
+        navigate('/login', { state: { from: '/order-summary', selection, totalPrice: totalPrice() } })
+        return
+      }
       // Go to order summary
       navigate('/order-summary', { state: { selection, totalPrice: totalPrice() } })
     }

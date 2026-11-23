@@ -19,6 +19,13 @@ export const register = async (req, res) => {
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ message: 'Email already registered' });
 
+    // If email is not configured, skip verification (dev mode)
+    const emailConfigured =
+      process.env.EMAIL_USER &&
+      process.env.EMAIL_USER !== 'your_email@gmail.com' &&
+      process.env.EMAIL_PASS &&
+      process.env.EMAIL_PASS !== 'your_email_app_password';
+
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
 
@@ -26,18 +33,26 @@ export const register = async (req, res) => {
       name,
       email,
       password,
-      emailVerificationToken: verificationToken,
-      emailVerificationExpires: verificationExpires,
+      isEmailVerified: !emailConfigured, // auto-verify if no email config
+      emailVerificationToken: emailConfigured ? verificationToken : undefined,
+      emailVerificationExpires: emailConfigured ? verificationExpires : undefined,
     });
 
-    // Send verification email (non-blocking — don't fail registration if email fails)
-    sendVerificationEmail(email, verificationToken).catch(err =>
-      console.error('Verification email failed:', err.message)
-    );
+    if (emailConfigured) {
+      sendVerificationEmail(email, verificationToken).catch(err =>
+        console.error('Verification email failed:', err.message)
+      );
+    }
+
+    const token = generateToken(user._id);
 
     res.status(201).json({
-      message: 'Registration successful. Please check your email to verify your account.',
-      user: { id: user._id, name: user.name, email: user.email, isEmailVerified: false },
+      message: emailConfigured
+        ? 'Registration successful. Please check your email to verify your account.'
+        : 'Registration successful! You can now login.',
+      autoVerified: !emailConfigured,
+      token: !emailConfigured ? token : undefined,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, isEmailVerified: user.isEmailVerified },
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -79,6 +94,37 @@ export const login = async (req, res) => {
 
     if (!user.isEmailVerified)
       return res.status(403).json({ message: 'Please verify your email before logging in', notVerified: true });
+
+    const token = generateToken(user._id);
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// POST /api/admin/login — Dedicated Admin Portal Login
+export const adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password)
+      return res.status(400).json({ message: 'Email and password are required' });
+
+    const user = await User.findOne({ email });
+    if (!user || !(await user.matchPassword(password)))
+      return res.status(401).json({ message: 'Invalid admin credentials' });
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied: This account does not have administrator privileges.' });
+    }
 
     const token = generateToken(user._id);
     res.json({

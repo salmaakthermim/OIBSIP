@@ -21,11 +21,20 @@ export default function Register() {
     if (form.password.length < 6) return setError('Password must be at least 6 characters')
     setLoading(true)
     try {
-      await register(form.name, form.email, form.password)
-      setSuccess(true)
-      toast.success('Account created! Check your email to verify.')
-    } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Try again')
+      const result = await register(form.name, form.email, form.password)
+      if (result.autoVerified) {
+        // Email not configured — auto verified, store token and redirect
+        if (result.token) {
+          localStorage.setItem('token', result.token)
+          localStorage.setItem('user', JSON.stringify(result.user))
+        }
+        toast.success('Account created! You can now login.')
+        navigate('/login')
+      } else {
+        setSuccess(true)
+        toast.success('Account created! Check your email to verify.')
+      }
+    } catch (err) {      setError(err.response?.data?.message || 'Registration failed. Try again')
     } finally {
       setLoading(false)
     }

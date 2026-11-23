@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import { useLocation, useNavigate, Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
 
 export default function OrderSummary() {
   const { state } = useLocation()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [quantity, setQuantity] = useState(1)
+  const [address, setAddress] = useState('')
+  const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
 
   if (!state?.selection) return (
@@ -27,6 +31,12 @@ export default function OrderSummary() {
   ]
 
   const handlePay = async () => {
+    if (!user) {
+      toast.error('Please login to complete your order')
+      navigate('/login', { state: { from: '/order-summary' } })
+      return
+    }
+
     setLoading(true)
     try {
       // Create order
@@ -119,6 +129,27 @@ export default function OrderSummary() {
             <button onClick={() => setQuantity(q => Math.max(1, q - 1))} style={{ width: 40, height: 40, borderRadius: 10, border: '2px solid #EDE0D8', background: '#fff', fontSize: '1.2rem', fontWeight: 800, cursor: 'pointer', color: '#FF4D00' }}>−</button>
             <span style={{ fontWeight: 900, fontSize: '1.4rem', color: '#1A0500', minWidth: 32, textAlign: 'center' }}>{quantity}</span>
             <button onClick={() => setQuantity(q => q + 1)} style={{ width: 40, height: 40, borderRadius: 10, border: '2px solid #EDE0D8', background: '#fff', fontSize: '1.2rem', fontWeight: 800, cursor: 'pointer', color: '#FF4D00' }}>+</button>
+          </div>
+        </div>
+
+        {/* Delivery Details */}
+        <div style={{ background: '#fff', borderRadius: 20, padding: '20px 24px', boxShadow: '0 4px 24px rgba(0,0,0,0.07)', marginBottom: 20 }}>
+          <p style={{ fontWeight: 800, color: '#1A0500', marginBottom: 14, fontSize: '1rem' }}>📍 Delivery Address (Optional)</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <input
+              type="text"
+              placeholder="House #, Street / Road, Area, City"
+              value={address}
+              onChange={e => setAddress(e.target.value)}
+              style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1.5px solid #EDE0D8', fontSize: '0.9rem', outline: 'none' }}
+            />
+            <input
+              type="tel"
+              placeholder="Contact Phone Number (e.g. +880 1712-345678)"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1.5px solid #EDE0D8', fontSize: '0.9rem', outline: 'none' }}
+            />
           </div>
         </div>
 

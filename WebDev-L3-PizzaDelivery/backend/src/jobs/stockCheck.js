@@ -2,36 +2,48 @@ import cron from 'node-cron';
 import Ingredient from '../models/Ingredient.js';
 import { sendLowStockAlert } from '../utils/sendEmail.js';
 
+// Logic to check stock and dispatch low-stock email
+export const runStockCheck = async () => {
+  try {
+    const lowStockItems = await Ingredient.find({
+      $expr: { $lt: ['$stock', '$lowStockThreshold'] },
+      isActive: true,
+    });
+
+    if (lowStockItems.length === 0) {
+      console.log('[STOCK CHECK] All ingredients are well-stocked.');
+      return { count: 0, items: [], message: 'All ingredients are well-stocked.' };
+    }
+
+    const unsent = lowStockItems.filter(i => !i.lowStockAlertSent);
+    if (unsent.length > 0) {
+      await sendLowStockAlert(unsent).catch(err =>
+        console.error('[STOCK CHECK EMAIL ERROR]:', err.message)
+      );
+      await Ingredient.updateMany(
+        { _id: { $in: unsent.map(i => i._id) } },
+        { lowStockAlertSent: true }
+      );
+    }
+
+    return {
+      count: lowStockItems.length,
+      items: lowStockItems,
+      alertsSent: unsent.length,
+      message: `Found ${lowStockItems.length} item(s) below threshold. Alerts sent for ${unsent.length} item(s).`,
+    };
+  } catch (err) {
+    console.error('[STOCK CHECK ERROR]:', err.message);
+    throw err;
+  }
+};
+
 // Runs every hour: checks for low stock items and sends email alert
 export const startStockCheckJob = () => {
-  // Every hour at minute 0
   cron.schedule('0 * * * *', async () => {
     try {
       console.log('[CRON] Running low-stock check...');
-
-      // Find items below threshold that haven't had an alert sent yet
-      const lowStockItems = await Ingredient.find({
-        $expr: { $lt: ['$stock', '$lowStockThreshold'] },
-        isActive: true,
-        lowStockAlertSent: false,
-      });
-
-      if (lowStockItems.length === 0) {
-        console.log('[CRON] All ingredients are well-stocked.');
-        return;
-      }
-
-      console.log(`[CRON] Found ${lowStockItems.length} low-stock item(s). Sending alert...`);
-
-      await sendLowStockAlert(lowStockItems);
-
-      // Mark alert as sent so we don't spam
-      await Ingredient.updateMany(
-        { _id: { $in: lowStockItems.map(i => i._id) } },
-        { lowStockAlertSent: true }
-      );
-
-      console.log('[CRON] Low-stock alert email sent.');
+      await runStockCheck();
     } catch (err) {
       console.error('[CRON] Stock check error:', err.message);
     }

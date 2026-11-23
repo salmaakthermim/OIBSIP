@@ -28,11 +28,11 @@ export default function Navbar() {
   const navLinks = [
     ['/', 'Home', '🏠'],
     ['/menu', 'Menu', '🍕'],
+    ['/build', 'Build Pizza', '🛠️'],
     ...(user && !isAdmin ? [
-      ['/build', 'Build Pizza', '🔧'],
       ['/orders', 'My Orders', '📦'],
     ] : []),
-    ...(isAdmin ? [['/admin', 'Admin', '⚙️']] : []),
+    ...(isAdmin ? [['/admin', 'Admin Console', '🛡️']] : [['/admin/login', 'Admin', '🔒']]),
   ]
 
   return (

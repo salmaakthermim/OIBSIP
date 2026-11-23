@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate, Link } from 'react-router-dom'
+import { io } from 'socket.io-client'
+import toast from 'react-hot-toast'
 import api from '../utils/api'
 
 const STATUS_CONFIG = {
@@ -26,10 +28,29 @@ export default function OrderHistory() {
   useEffect(() => {
     if (!user) { navigate('/login'); return }
     fetchOrders()
-    // Poll every 10 seconds for real-time status updates
+
+    // Real-time updates via Socket.IO
+    const socket = io('http://localhost:5000')
+    socket.on('orderStatusUpdate', ({ orderId, status, order }) => {
+      setOrders(prev => {
+        const match = prev.find(o => o._id === orderId)
+        if (match && match.orderStatus !== status) {
+          toast(`Order #${orderId.slice(-6).toUpperCase()} updated to "${status}"! 🛵`, {
+            icon: '🍕',
+            duration: 4000,
+          })
+        }
+        return prev.map(o => o._id === orderId ? (order || { ...o, orderStatus: status }) : o)
+      })
+    })
+
+    // Poll every 10 seconds as resilient fallback
     const interval = setInterval(fetchOrders, 10000)
-    return () => clearInterval(interval)
-  }, [user])
+    return () => {
+      clearInterval(interval)
+      socket.disconnect()
+    }
+  }, [user, fetchOrders])
 
   if (loading) return (
     <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
