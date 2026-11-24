@@ -241,7 +241,7 @@ export default function AdminDashboard() {
   })
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#F8F4F1' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#F8F4F1' }} className="admin-container">
       {/* Sidebar */}
       <aside style={{
         width: 250,
@@ -1228,7 +1228,30 @@ export default function AdminDashboard() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        @media (max-width: 768px) { .admin-sidebar { display: none; } }
+        @media (max-width: 860px) {
+          .admin-container {
+            flex-direction: column !important;
+          }
+          .admin-sidebar {
+            width: 100% !important;
+            padding: 1rem 1rem 0.5rem !important;
+          }
+          .admin-sidebar nav {
+            display: flex !important;
+            overflow-x: auto !important;
+            padding: 0.5rem 0 !important;
+            gap: 8px !important;
+            -webkit-overflow-scrolling: touch;
+          }
+          .admin-sidebar nav button {
+            width: auto !important;
+            white-space: nowrap !important;
+            border-left: none !important;
+            border-bottom: 3px solid transparent !important;
+            border-radius: 10px !important;
+            padding: 9px 16px !important;
+          }
+        }
       `}</style>
     </div>
   )

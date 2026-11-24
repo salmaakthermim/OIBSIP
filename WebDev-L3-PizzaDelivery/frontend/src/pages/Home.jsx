@@ -334,7 +334,7 @@ export default function Home() {
         }} />
 
         {/* Content Container */}
-        <div className="container relative z-10" style={{ maxWidth: 1220, margin: '0 auto', padding: '1rem 1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '3rem', alignItems: 'center' }}>
+        <div className="container relative z-10" style={{ maxWidth: 1220, margin: '0 auto', padding: '1rem 1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '3rem', alignItems: 'center' }}>
           
           {/* Left Column: Text & CTAs */}
           <div style={{ animation: 'slideUp 0.7s ease' }}>
@@ -369,7 +369,7 @@ export default function Home() {
 
             {/* Main Headline */}
             <h1 style={{
-              fontSize: 'clamp(2.5rem, 5.2vw, 4.4rem)',
+              fontSize: 'clamp(1.9rem, 5.5vw, 4.2rem)',
               fontWeight: 900,
               color: '#fff',
               lineHeight: 1.1,
@@ -587,6 +587,7 @@ export default function Home() {
         <button
           onClick={() => { slide('prev'); startTimer() }}
           aria-label="Previous Slide"
+          className="hero-arrow"
           style={{
             position: 'absolute',
             left: 20,
@@ -616,6 +617,7 @@ export default function Home() {
         <button
           onClick={() => { slide('next'); startTimer() }}
           aria-label="Next Slide"
+          className="hero-arrow"
           style={{
             position: 'absolute',
             right: 20,
@@ -1134,11 +1136,11 @@ export default function Home() {
         <div style={{
           background: 'linear-gradient(135deg, #1A0500 0%, #2E0B00 100%)',
           borderRadius: 28,
-          padding: 'clamp(2.5rem, 5vw, 4rem)',
+          padding: 'clamp(1.8rem, 4vw, 3.5rem)',
           color: '#fff',
           boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
           gap: 36,
           alignItems: 'center',
           position: 'relative',
@@ -1674,6 +1676,11 @@ export default function Home() {
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @media (max-width: 640px) {
+          .hero-arrow {
+            display: none !important;
+          }
         }
       `}</style>
     </div>

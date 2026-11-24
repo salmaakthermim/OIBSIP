@@ -135,11 +135,11 @@ export default function PizzaBuilder() {
               <div
                 onClick={() => i < step && setStep(i)}
                 style={{
-                  width: 48, height: 48, borderRadius: '50%',
+                  width: 'clamp(38px, 9vw, 48px)', height: 'clamp(38px, 9vw, 48px)', borderRadius: '50%',
                   background: i <= step ? 'linear-gradient(135deg,#FF4D00,#FF8C42)' : '#fff',
                   border: `3px solid ${i <= step ? '#FF4D00' : '#EDE0D8'}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 20, flexShrink: 0,
+                  fontSize: 'clamp(16px, 4vw, 20px)', flexShrink: 0,
                   cursor: i < step ? 'pointer' : 'default',
                   boxShadow: i === step ? '0 4px 20px rgba(255,77,0,0.35)' : 'none',
                   transition: 'all 0.3s',
@@ -188,7 +188,7 @@ export default function PizzaBuilder() {
         </div>
 
         {/* Ingredient Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, marginBottom: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 14, marginBottom: '2rem' }}>
           {stepItems[step].map(item => {
             const outOfStock = item.stock < 1
             const isSelected = isVegStep

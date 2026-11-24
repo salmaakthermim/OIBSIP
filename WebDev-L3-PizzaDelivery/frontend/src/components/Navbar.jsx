@@ -531,8 +531,8 @@ export default function Navbar() {
 
         {/* Mobile Dropdown Drawer */}
         <div style={{
-          maxHeight: menuOpen ? 520 : 0,
-          overflow: 'hidden',
+          maxHeight: menuOpen ? 'calc(100vh - 66px)' : 0,
+          overflowY: 'auto',
           transition: 'max-height 0.35s ease',
           background: 'rgba(15,3,0,0.98)',
           borderTop: menuOpen ? '1px solid rgba(255,255,255,0.08)' : 'none',
@@ -682,7 +682,7 @@ export default function Navbar() {
       <style>{`
         .desktop-nav { display: flex !important; }
         .mobile-nav { display: none !important; }
-        @media (max-width: 768px) {
+        @media (max-width: 960px) {
           .desktop-nav { display: none !important; }
           .mobile-nav { display: flex !important; }
         }

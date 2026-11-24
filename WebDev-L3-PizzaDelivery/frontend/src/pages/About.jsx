@@ -60,7 +60,7 @@ export default function About() {
   ]
 
   return (
-    <div style={{ background: '#FFF8F3', minHeight: '100vh', color: '#1A0500', fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+    <div style={{ background: '#FFF8F3', minHeight: '100vh', color: '#1A0500', fontFamily: "'Segoe UI', system-ui, sans-serif", overflowX: 'hidden' }}>
       
       {/* ════════════ HERO BANNER ════════════ */}
       <section style={{
@@ -196,7 +196,7 @@ export default function About() {
 
       {/* ════════════ OUR STORY SECTION ════════════ */}
       <section style={{ maxWidth: 1140, margin: '5rem auto 0', padding: '0 1.25rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '3.5rem', alignItems: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '3.5rem', alignItems: 'center' }}>
           
           {/* Image Showcase */}
           <div style={{ position: 'relative' }}>
@@ -219,7 +219,7 @@ export default function About() {
             <div style={{
               position: 'absolute',
               bottom: -20,
-              right: -15,
+              right: 0,
               background: '#1A0500',
               color: '#fff',
               padding: '16px 22px',
