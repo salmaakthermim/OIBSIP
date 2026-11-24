@@ -62,6 +62,8 @@ export default function Navbar() {
     ['/', 'Home', '🏠'],
     ['/menu', 'Menu', '🍕'],
     ['/build', 'Build Pizza', '🛠️'],
+    ['/about', 'About Us', '✨'],
+    ['/contact', 'Contact', '📞'],
     ...(user && !isAdmin ? [
       ['/orders', 'My Orders', '📦'],
     ] : []),

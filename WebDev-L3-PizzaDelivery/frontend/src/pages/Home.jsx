@@ -10,8 +10,13 @@ const banners = [
     subtitle: "Stone-baked artisanal crusts, farm-fresh ingredients, and melted cheese perfection delivered piping hot in 30 minutes.",
     offer: "🎉 20% OFF FIRST ORDER",
     badge: "FRESH & HOT",
-    image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1600&q=95",
+    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1600&q=95",
     accent: "#FF4D00",
+    plateImage: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=800&q=90",
+    plateTitle: "Margherita Con Basilico",
+    plateTag: "NEAPOLITAN ORIGINAL",
+    plateDesc: "San Marzano plum tomatoes, fresh sweet basil & golden bubbly mozzarella.",
+    platePrice: 299,
   },
   {
     id: 2,
@@ -20,8 +25,13 @@ const banners = [
     subtitle: "4 simple steps: Pick your crust, signature sauce, artisan cheese, and mountain of toppings. Dynamic price, zero compromises.",
     offer: "🧀 B1G1 WEEKEND SPECIAL",
     badge: "CUSTOM BUILDER",
-    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1600&q=95",
+    image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1600&q=95",
     accent: "#FF6B00",
+    plateImage: "https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?w=800&q=90",
+    plateTitle: "Smoky BBQ Supreme",
+    plateTag: "CHEESE BURST CRUST",
+    plateDesc: "Molten cheese burst rim with tender smoked chicken, onions & hickory BBQ glaze.",
+    platePrice: 399,
   },
   {
     id: 3,
@@ -32,6 +42,11 @@ const banners = [
     badge: "CHEF SPECIAL",
     image: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=1600&q=95",
     accent: "#E63946",
+    plateImage: "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=800&q=90",
+    plateTitle: "Tuscan Garden Harvest",
+    plateTag: "100% ORGANIC VEGGIE",
+    plateDesc: "Wild mushrooms, kalamata olives, sweet bell peppers & herb infused olive oil.",
+    platePrice: 349,
   },
 ]
 
@@ -353,26 +368,27 @@ export default function Home() {
                 animation: 'float 4s ease-in-out infinite',
               }}>
                 <img
-                  src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&q=90"
-                  alt="Pizza Visual"
+                  key={b.plateImage}
+                  src={b.plateImage}
+                  alt={b.plateTitle}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               </div>
 
               <span style={{ background: 'rgba(255,77,0,0.2)', color: '#FF8C42', border: '1px solid rgba(255,77,0,0.4)', padding: '3px 12px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 800, letterSpacing: 1 }}>
-                CHEESE BURST CRUST
+                {b.plateTag}
               </span>
               <h3 style={{ color: '#fff', fontWeight: 900, fontSize: '1.4rem', margin: '8px 0 4px' }}>
-                Supreme Cheese Craver
+                {b.plateTitle}
               </h3>
               <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem', margin: '0 0 16px' }}>
-                Garlic herb butter crust filled with molten mozzarella & topped with smoked gouda.
+                {b.plateDesc}
               </p>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '10px 16px', borderRadius: 16 }}>
                 <div>
                   <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.72rem' }}>Starting at</span>
-                  <p style={{ color: '#FF4D00', fontWeight: 900, fontSize: '1.3rem', margin: 0 }}>৳349</p>
+                  <p style={{ color: '#FF4D00', fontWeight: 900, fontSize: '1.3rem', margin: 0 }}>৳{b.platePrice}</p>
                 </div>
                 <Link
                   to="/build"
