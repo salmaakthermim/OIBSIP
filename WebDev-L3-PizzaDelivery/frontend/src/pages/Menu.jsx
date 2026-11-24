@@ -10,20 +10,39 @@ const FEATURED = [
 ]
 
 export default function Menu() {
+  const [pizzas, setPizzas] = useState(FEATURED)
   const [ingredients, setIngredients] = useState({ base: [], sauce: [], cheese: [], vegetable: [] })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    api.get('/ingredients').then(res => {
-      const all = res.data
-      setIngredients({
-        base: all.filter(i => i.category === 'base'),
-        sauce: all.filter(i => i.category === 'sauce'),
-        cheese: all.filter(i => i.category === 'cheese'),
-        vegetable: all.filter(i => i.category === 'vegetable'),
+    Promise.all([
+      api.get('/ingredients'),
+      api.get('/pizzas').catch(() => ({ data: [] })),
+    ])
+      .then(([ingRes, pizzaRes]) => {
+        const all = ingRes.data || []
+        setIngredients({
+          base: all.filter(i => i.category === 'base'),
+          sauce: all.filter(i => i.category === 'sauce'),
+          cheese: all.filter(i => i.category === 'cheese'),
+          vegetable: all.filter(i => i.category === 'vegetable'),
+        })
+
+        if (pizzaRes.data && pizzaRes.data.length > 0) {
+          setPizzas(pizzaRes.data.map(p => ({
+            _id: p._id,
+            name: p.name,
+            desc: p.description,
+            price: p.basePrice || 299,
+            tag: p.category === 'veg' ? '🌿 Veg' : '🍗 Non-Veg',
+            tagColor: p.category === 'veg' ? '#059669' : '#EF4444',
+            img: p.image || 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&q=80',
+          })))
+        }
       })
-    }).catch(console.error).finally(() => setLoading(false))
+      .catch(console.error)
+      .finally(() => setLoading(false))
   }, [])
 
   const allIngredients = [
@@ -57,8 +76,8 @@ export default function Menu() {
             <p style={{ color: '#888', fontSize: '0.9rem' }}>Our most loved classics</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 24 }}>
-            {FEATURED.map((p, i) => (
-              <div key={i} style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', transition: 'transform 0.3s, box-shadow 0.3s', cursor: 'pointer' }}
+            {pizzas.map((p, i) => (
+              <div key={p._id || i} style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', transition: 'transform 0.3s, box-shadow 0.3s', cursor: 'pointer' }}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 12px 36px rgba(0,0,0,0.12)' }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 16px rgba(0,0,0,0.07)' }}>
                 <div style={{ position: 'relative', height: 190, overflow: 'hidden' }}>

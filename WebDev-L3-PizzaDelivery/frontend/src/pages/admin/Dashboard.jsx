@@ -5,7 +5,7 @@ import { io } from 'socket.io-client'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
 
-const TABS = ['Overview', 'Orders', 'Inventory']
+const TABS = ['Overview', 'Orders', 'Inventory', 'Pizzas']
 
 export default function AdminDashboard() {
   const { user, isAdmin, logout } = useAuth()
@@ -14,6 +14,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState(null)
   const [orders, setOrders] = useState([])
   const [inventory, setInventory] = useState([])
+  const [pizzas, setPizzas] = useState([])
   const [loading, setLoading] = useState(true)
   const [stockEdit, setStockEdit] = useState({}) // { id: newValue }
   const [thresholdEdit, setThresholdEdit] = useState({})
@@ -32,6 +33,18 @@ export default function AdminDashboard() {
   })
   const [addingIngredient, setAddingIngredient] = useState(false)
   const [checkingStock, setCheckingStock] = useState(false)
+
+  // Add pizza modal state
+  const [showAddPizzaModal, setShowAddPizzaModal] = useState(false)
+  const [newPizza, setNewPizza] = useState({
+    name: '',
+    description: '',
+    category: 'veg',
+    basePrice: 299,
+    image: '',
+    ingredients: '',
+  })
+  const [addingPizza, setAddingPizza] = useState(false)
 
   useEffect(() => {
     if (!user || !isAdmin) {
@@ -66,20 +79,69 @@ export default function AdminDashboard() {
 
   const fetchAll = async () => {
     try {
-      const [statsRes, ordersRes, invRes] = await Promise.all([
+      const [statsRes, ordersRes, invRes, pizzasRes] = await Promise.all([
         api.get('/admin/dashboard'),
         api.get('/admin/orders'),
         api.get('/admin/inventory'),
+        api.get('/pizzas?all=true').catch(() => ({ data: [] })),
       ])
       setStats(statsRes.data)
       setOrders(ordersRes.data)
       setInventory(invRes.data)
+      setPizzas(pizzasRes.data || [])
     } catch (err) {
       if (err.response?.status === 403 || err.response?.status === 401) {
         navigate('/admin/login')
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleAddPizza = async (e) => {
+    e.preventDefault()
+    if (!newPizza.name.trim() || !newPizza.description.trim()) {
+      return toast.error('Name and description are required')
+    }
+    setAddingPizza(true)
+    try {
+      const ingredientsArray = newPizza.ingredients
+        ? newPizza.ingredients.split(',').map(s => s.trim()).filter(Boolean)
+        : []
+      await api.post('/pizzas', {
+        ...newPizza,
+        basePrice: Number(newPizza.basePrice) || 299,
+        ingredients: ingredientsArray,
+      })
+      toast.success('Pizza added to menu successfully! 🍕')
+      setShowAddPizzaModal(false)
+      setNewPizza({ name: '', description: '', category: 'veg', basePrice: 299, image: '', ingredients: '' })
+      fetchAll()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to add pizza')
+    } finally {
+      setAddingPizza(false)
+    }
+  }
+
+  const handleTogglePizzaAvailability = async (id, currentStatus) => {
+    try {
+      await api.put(`/pizzas/${id}`, { isAvailable: !currentStatus, isActive: !currentStatus })
+      setPizzas(prev => prev.map(p => p._id === id ? { ...p, isAvailable: !currentStatus, isActive: !currentStatus } : p))
+      toast.success(`Pizza marked as ${!currentStatus ? 'Available' : 'Unavailable'}`)
+    } catch {
+      toast.error('Failed to update pizza availability')
+    }
+  }
+
+  const handleDeletePizza = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this pizza?')) return
+    try {
+      await api.delete(`/pizzas/${id}`)
+      setPizzas(prev => prev.filter(p => p._id !== id))
+      toast.success('Pizza removed from menu')
+    } catch {
+      toast.error('Failed to delete pizza')
     }
   }
 
@@ -221,10 +283,15 @@ export default function AdminDashboard() {
                 gap: 12,
               }}
             >
-              {t === 'Overview' ? '📊' : t === 'Orders' ? '📦' : '🏪'} {t}
+              {t === 'Overview' ? '📊' : t === 'Orders' ? '📦' : t === 'Inventory' ? '🏪' : '🍕'} {t}
               {t === 'Inventory' && lowStock.length > 0 && (
                 <span style={{ background: '#EF4444', color: '#fff', fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 10, marginLeft: 'auto' }}>
                   {lowStock.length}
+                </span>
+              )}
+              {t === 'Pizzas' && (
+                <span style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, marginLeft: 'auto' }}>
+                  {pizzas.length}
                 </span>
               )}
             </button>
@@ -273,7 +340,7 @@ export default function AdminDashboard() {
               PIZZAHUB OPERATIONS
             </span>
             <h1 style={{ fontWeight: 900, color: '#1A0500', fontSize: '1.8rem', margin: '2px 0 0' }}>
-              {tab === 'Overview' ? 'Business Overview 📊' : tab === 'Orders' ? 'Order Management 📦' : 'Inventory Management 🏪'}
+              {tab === 'Overview' ? 'Business Overview 📊' : tab === 'Orders' ? 'Order Management 📦' : tab === 'Inventory' ? 'Inventory Management 🏪' : 'Pizza Menu Management 🍕'}
             </h1>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
@@ -668,6 +735,173 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* ════════════ PIZZAS TAB ════════════ */}
+        {tab === 'Pizzas' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14, marginBottom: '1.5rem' }}>
+              <div>
+                <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>
+                  Manage storefront pre-made pizzas, pricing, ingredients and availability.
+                </p>
+                <p style={{ color: '#1A0500', fontSize: '0.88rem', margin: '4px 0 0', fontWeight: 700 }}>
+                  🍕 Total Pizzas: {pizzas.length} • Available: {pizzas.filter(p => p.isAvailable).length}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAddPizzaModal(true)}
+                style={{
+                  background: 'linear-gradient(135deg,#FF4D00,#FF8C42)',
+                  border: 'none',
+                  color: '#fff',
+                  padding: '10px 20px',
+                  borderRadius: 10,
+                  fontWeight: 800,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(255,77,0,0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                + Add New Pizza 🍕
+              </button>
+            </div>
+
+            {pizzas.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '3rem', background: '#fff', borderRadius: 16 }}>
+                <p style={{ fontSize: 40, margin: '0 0 10px' }}>🍕</p>
+                <h3 style={{ margin: 0, fontWeight: 800, color: '#1A0500' }}>No Pizzas in Menu</h3>
+                <p style={{ color: '#888', fontSize: '0.9rem' }}>Click the button above to add your first pizza to the storefront menu.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+                {pizzas.map(pizza => (
+                  <div
+                    key={pizza._id}
+                    style={{
+                      background: '#fff',
+                      borderRadius: 18,
+                      overflow: 'hidden',
+                      boxShadow: '0 4px 18px rgba(0,0,0,0.06)',
+                      border: '1.5px solid #F5EDE8',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div style={{ position: 'relative', height: 180, overflow: 'hidden', background: '#1A0500' }}>
+                      <img
+                        src={pizza.image || 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&q=80'}
+                        alt={pizza.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={e => { e.currentTarget.src = 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&q=80' }}
+                      />
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: 10,
+                          left: 10,
+                          background: pizza.category === 'veg' ? '#059669' : '#EF4444',
+                          color: '#fff',
+                          fontSize: 11,
+                          fontWeight: 800,
+                          padding: '3px 10px',
+                          borderRadius: 20,
+                        }}
+                      >
+                        {pizza.category === 'veg' ? '🌿 Veg' : '🍗 Non-Veg'}
+                      </span>
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: 10,
+                          right: 10,
+                          background: pizza.isAvailable ? '#10B981' : '#6B7280',
+                          color: '#fff',
+                          fontSize: 11,
+                          fontWeight: 800,
+                          padding: '3px 10px',
+                          borderRadius: 20,
+                        }}
+                      >
+                        {pizza.isAvailable ? '✓ Active' : '✕ Disabled'}
+                      </span>
+                    </div>
+
+                    <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                        <h3 style={{ margin: 0, fontWeight: 900, color: '#1A0500', fontSize: '1.05rem' }}>{pizza.name}</h3>
+                        <span style={{ color: '#FF4D00', fontWeight: 900, fontSize: '1.15rem' }}>৳{pizza.basePrice}</span>
+                      </div>
+
+                      <p style={{ color: '#777', fontSize: '0.82rem', margin: '0 0 12px', lineHeight: 1.4, flex: 1 }}>
+                        {pizza.description}
+                      </p>
+
+                      {pizza.ingredients && pizza.ingredients.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 14 }}>
+                          {pizza.ingredients.map((ing, idx) => (
+                            <span
+                              key={idx}
+                              style={{
+                                background: '#FFF8F4',
+                                border: '1px solid #FFE0D3',
+                                color: '#FF4D00',
+                                padding: '2px 8px',
+                                borderRadius: 8,
+                                fontSize: '0.72rem',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {ing}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', gap: 8, borderTop: '1px solid #F5EDE8', paddingTop: 12 }}>
+                        <button
+                          type="button"
+                          onClick={() => handleTogglePizzaAvailability(pizza._id, pizza.isAvailable)}
+                          style={{
+                            flex: 1,
+                            padding: '8px',
+                            borderRadius: 8,
+                            border: `1.5px solid ${pizza.isAvailable ? '#F59E0B' : '#10B981'}`,
+                            background: pizza.isAvailable ? '#FFFBEB' : '#ECFDF5',
+                            color: pizza.isAvailable ? '#B45309' : '#059669',
+                            fontWeight: 700,
+                            fontSize: '0.78rem',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {pizza.isAvailable ? 'Hide from Menu' : 'Show on Menu'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePizza(pizza._id)}
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: 8,
+                            border: '1.5px solid #FCA5A5',
+                            background: '#FFF0EE',
+                            color: '#DC2626',
+                            fontWeight: 700,
+                            fontSize: '0.78rem',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          🗑️ Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
       </main>
 
       {/* ════════════ ADD INGREDIENT MODAL ════════════ */}
@@ -854,6 +1088,139 @@ export default function AdminDashboard() {
                 <option value="Sent to Delivery">Sent to Delivery</option>
               </select>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════ ADD PIZZA MODAL ════════════ */}
+      {showAddPizzaModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 20, width: '100%', maxWidth: 520,
+            padding: '24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            animation: 'fadeIn 0.25s ease',
+            maxHeight: '90vh', overflowY: 'auto',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <div>
+                <h3 style={{ margin: 0, fontWeight: 900, color: '#1A0500', fontSize: '1.2rem' }}>Add New Pizza to Menu 🍕</h3>
+                <p style={{ margin: '2px 0 0', color: '#888', fontSize: '0.8rem' }}>Create a ready-to-order pizza for customers</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddPizzaModal(false)}
+                style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#999' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddPizza} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', color: '#555', marginBottom: 5 }}>Pizza Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Chicken Fajita Extreme"
+                  value={newPizza.name}
+                  onChange={e => setNewPizza({ ...newPizza, name: e.target.value })}
+                  required
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #EDE0D8', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', color: '#555', marginBottom: 5 }}>Description</label>
+                <textarea
+                  rows="2"
+                  placeholder="Short, delicious description for customers..."
+                  value={newPizza.description}
+                  onChange={e => setNewPizza({ ...newPizza, description: e.target.value })}
+                  required
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #EDE0D8', fontSize: '0.9rem', outline: 'none', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', color: '#555', marginBottom: 5 }}>Category</label>
+                  <select
+                    value={newPizza.category}
+                    onChange={e => setNewPizza({ ...newPizza, category: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #EDE0D8', fontSize: '0.9rem', outline: 'none', background: '#fff' }}
+                  >
+                    <option value="veg">🌿 Veg</option>
+                    <option value="non-veg">🍗 Non-Veg</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', color: '#555', marginBottom: 5 }}>Base Price (৳)</label>
+                  <input
+                    type="number"
+                    min="50"
+                    placeholder="399"
+                    value={newPizza.basePrice}
+                    onChange={e => setNewPizza({ ...newPizza, basePrice: e.target.value })}
+                    required
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #EDE0D8', fontSize: '0.9rem', outline: 'none' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', color: '#555', marginBottom: 5 }}>Image URL</label>
+                <input
+                  type="url"
+                  placeholder="https://images.unsplash.com/..."
+                  value={newPizza.image}
+                  onChange={e => setNewPizza({ ...newPizza, image: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #EDE0D8', fontSize: '0.9rem', outline: 'none' }}
+                />
+                {newPizza.image && (
+                  <div style={{ marginTop: 8, height: 100, borderRadius: 10, overflow: 'hidden', background: '#f0f0f0' }}>
+                    <img src={newPizza.image} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.currentTarget.style.display = 'none' }} />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', color: '#555', marginBottom: 5 }}>
+                  Key Ingredients <span style={{ color: '#888', fontWeight: 400 }}>(Comma-separated)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Thin Crust, BBQ Sauce, Mozzarella, Onions"
+                  value={newPizza.ingredients}
+                  onChange={e => setNewPizza({ ...newPizza, ingredients: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #EDE0D8', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAddPizzaModal(false)}
+                  style={{ flex: 1, padding: '11px', borderRadius: 10, border: '1.5px solid #EDE0D8', background: '#fff', color: '#777', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addingPizza}
+                  style={{
+                    flex: 2, padding: '11px', borderRadius: 10, border: 'none',
+                    background: addingPizza ? '#ccc' : 'linear-gradient(135deg,#FF4D00,#FF8C42)',
+                    color: '#fff', fontWeight: 800, cursor: addingPizza ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 14px rgba(255,77,0,0.3)',
+                  }}
+                >
+                  {addingPizza ? 'Saving Pizza...' : '+ Add Pizza to Menu'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

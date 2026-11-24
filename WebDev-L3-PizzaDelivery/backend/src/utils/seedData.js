@@ -3,8 +3,48 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import Ingredient from '../models/Ingredient.js';
 import User from '../models/User.js';
+import Pizza from '../models/Pizza.js';
 
 dotenv.config();
+
+const defaultPizzas = [
+  {
+    name: 'Margherita Classic',
+    description: 'Fresh tomato, mozzarella & aromatic basil',
+    category: 'veg',
+    basePrice: 299,
+    image: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&q=80',
+    ingredients: ['Thin Crust', 'Tomato Basil', 'Mozzarella', 'Cherry Tomatoes'],
+    isActive: true,
+  },
+  {
+    name: 'BBQ Chicken',
+    description: 'Smoky BBQ sauce with seasoned grilled chicken and onion',
+    category: 'non-veg',
+    basePrice: 399,
+    image: 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=400&q=80',
+    ingredients: ['Thick Crust', 'BBQ Sauce', 'Cheddar', 'Onions'],
+    isActive: true,
+  },
+  {
+    name: 'Veggie Supreme',
+    description: 'Loaded with fresh garden vegetables, bell peppers and olives',
+    category: 'veg',
+    basePrice: 349,
+    image: 'https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=400&q=80',
+    ingredients: ['Whole Wheat Crust', 'Tomato Basil', 'Mozzarella', 'Bell Peppers', 'Mushrooms', 'Olives'],
+    isActive: true,
+  },
+  {
+    name: 'Pepperoni Feast',
+    description: 'Double beef pepperoni with melted mozzarella and oregano',
+    category: 'non-veg',
+    basePrice: 449,
+    image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&q=80',
+    ingredients: ['Cheese Burst Crust', 'Tomato Basil', 'Mozzarella', 'Jalapenos'],
+    isActive: true,
+  },
+];
 
 const ingredients = [
   // 5 Bases
@@ -40,14 +80,13 @@ const ingredients = [
 
 export const seedDatabase = async () => {
   try {
-    const count = await Ingredient.countDocuments();
-    if (count > 0) {
+    const ingredientCount = await Ingredient.countDocuments();
+    if (ingredientCount === 0) {
+      await Ingredient.insertMany(ingredients);
+      console.log(`[SEED] Seeded ${ingredients.length} ingredients`);
+    } else {
       console.log('[SEED] Ingredients already seeded, skipping.');
-      return;
     }
-
-    await Ingredient.insertMany(ingredients);
-    console.log(`[SEED] Seeded ${ingredients.length} ingredients`);
 
     // Create default admin if not exists
     const adminExists = await User.findOne({ role: 'admin' });
@@ -61,6 +100,15 @@ export const seedDatabase = async () => {
       });
       await adminUser.save();
       console.log('[SEED] Default admin created: admin@pizzahub.com / admin123');
+    }
+
+    // Seed default pizzas if not exist
+    const pizzaCount = await Pizza.countDocuments();
+    if (pizzaCount === 0) {
+      await Pizza.insertMany(defaultPizzas);
+      console.log(`[SEED] Seeded ${defaultPizzas.length} pizzas`);
+    } else {
+      console.log('[SEED] Pizzas already seeded, skipping.');
     }
   } catch (err) {
     console.error('[SEED] Error:', err.message);

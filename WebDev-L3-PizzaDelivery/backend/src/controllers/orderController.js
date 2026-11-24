@@ -2,6 +2,7 @@ import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import Order from '../models/Order.js';
 import Ingredient from '../models/Ingredient.js';
+import Payment from '../models/Payment.js';
 
 const getRazorpay = () => {
   if (!process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID === 'your_razorpay_key_id') return null;
@@ -117,6 +118,17 @@ export const verifyPayment = async (req, res) => {
     order.orderStatus = 'Order Received';
     await order.save();
 
+    // Create payment record in Payment collection
+    await Payment.create({
+      orderId: order._id,
+      userId: order.user._id || order.user,
+      provider: 'razorpay',
+      providerOrderId: razorpayOrderId,
+      providerPaymentId: razorpayPaymentId,
+      amount: order.totalAmount,
+      status: 'success',
+    }).catch(err => console.error('Payment record create error:', err.message));
+
     const populatedOrder = await Order.findById(order._id)
       .populate('user', 'name email')
       .populate('selectedIngredients.base selectedIngredients.sauce selectedIngredients.cheese selectedIngredients.vegetables');
@@ -158,6 +170,17 @@ export const mockPayment = async (req, res) => {
     order.paymentId = `mock_${Date.now()}`;
     order.orderStatus = 'Order Received';
     await order.save();
+
+    // Create payment record in Payment collection
+    await Payment.create({
+      orderId: order._id,
+      userId: order.user._id || order.user,
+      provider: 'mock',
+      providerOrderId: order.razorpayOrderId || `mock_order_${Date.now()}`,
+      providerPaymentId: order.paymentId,
+      amount: order.totalAmount,
+      status: 'success',
+    }).catch(err => console.error('Payment record create error:', err.message));
 
     const populatedOrder = await Order.findById(order._id)
       .populate('user', 'name email')

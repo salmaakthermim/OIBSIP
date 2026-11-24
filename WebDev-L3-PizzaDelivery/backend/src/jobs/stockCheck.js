@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import Ingredient from '../models/Ingredient.js';
+import Notification from '../models/Notification.js';
 import { sendLowStockAlert } from '../utils/sendEmail.js';
 
 // Logic to check stock and dispatch low-stock email
@@ -23,6 +24,19 @@ export const runStockCheck = async () => {
       await Ingredient.updateMany(
         { _id: { $in: unsent.map(i => i._id) } },
         { lowStockAlertSent: true }
+      );
+
+      // Save notification log in Notification collection
+      await Promise.allSettled(
+        unsent.map(item =>
+          Notification.create({
+            ingredientId: item._id,
+            notificationType: 'low_stock_email',
+            message: `Low stock alert: ${item.name} (${item.stock} left, threshold ${item.lowStockThreshold})`,
+            state: 'sent',
+            sentAt: new Date(),
+          })
+        )
       );
     }
 
