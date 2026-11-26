@@ -46,7 +46,7 @@ export default function PizzaBuilder() {
   const handleSingleSelect = (category, item) => {
     if (item.stock < 1) { toast.error(`${item.name} is out of stock!`); return }
     setSelection(prev => ({ ...prev, [category]: item }))
-    toast.success(`${item.name} সিলেক্ট করা হয়েছে! ✓`, { id: 'ing-select', duration: 1800 })
+    toast.success(`${item.name} selected! ✓`, { id: 'ing-select', duration: 1800 })
   }
 
   const handleVegetableToggle = (item) => {
@@ -77,15 +77,15 @@ export default function PizzaBuilder() {
 
   const handleNext = () => {
     if (step === 0 && !selection.base) {
-      toast.error('অনুগ্রহ করে প্রথমে যেকোনো ১টি Pizza Base (Crust) কার্ডে ক্লিক করে সিলেক্ট করুন! 🍞', { id: 'step-req' })
+      toast.error('Please select a Pizza Base (Crust) card to continue! 🍞', { id: 'step-req' })
       return
     }
     if (step === 1 && !selection.sauce) {
-      toast.error('অনুগ্রহ করে প্রথমে যেকোনো ১টি Sauce কার্ডে ক্লিক করে সিলেক্ট করুন! 🍅', { id: 'step-req' })
+      toast.error('Please select a Sauce card to continue! 🍅', { id: 'step-req' })
       return
     }
     if (step === 2 && !selection.cheese) {
-      toast.error('অনুগ্রহ করে প্রথমে যেকোনো ১টি Cheese কার্ডে ক্লিক করে সিলেক্ট করুন! 🧀', { id: 'step-req' })
+      toast.error('Please select a Cheese card to continue! 🧀', { id: 'step-req' })
       return
     }
 
@@ -182,7 +182,7 @@ export default function PizzaBuilder() {
               boxShadow: '0 4px 15px rgba(255,140,66,0.15)',
             }}>
               <span>👇</span>
-              <span>নিচের যেকোনো ১টি {STEPS[step]} কার্ডে ক্লিক করে পছন্দ করুন</span>
+              <span>Please click and choose 1 {STEPS[step]} from the cards below</span>
             </div>
           )}
         </div>

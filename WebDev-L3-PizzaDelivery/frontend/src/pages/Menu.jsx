@@ -77,23 +77,38 @@ export default function Menu() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 24 }}>
             {pizzas.map((p, i) => (
-              <div key={p._id || i} style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', transition: 'transform 0.3s, box-shadow 0.3s', cursor: 'pointer' }}
+              <div key={p._id || i} style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', transition: 'transform 0.3s, box-shadow 0.3s' }}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 12px 36px rgba(0,0,0,0.12)' }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 16px rgba(0,0,0,0.07)' }}>
-                <div style={{ position: 'relative', height: 190, overflow: 'hidden' }}>
+                <Link to={`/pizza/${p._id || i + 1}`} style={{ display: 'block', position: 'relative', height: 190, overflow: 'hidden', textDecoration: 'none' }}>
                   <img src={p.img} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s' }}
                     onMouseEnter={e => e.target.style.transform = 'scale(1.08)'}
                     onMouseLeave={e => e.target.style.transform = 'scale(1)'} />
                   <span style={{ position: 'absolute', top: 10, left: 10, background: p.tagColor, color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20 }}>{p.tag}</span>
-                </div>
+                </Link>
                 <div style={{ padding: '14px 16px 20px' }}>
-                  <h3 style={{ fontWeight: 800, color: '#1A0500', marginBottom: 4 }}>{p.name}</h3>
+                  <Link to={`/pizza/${p._id || i + 1}`} style={{ textDecoration: 'none' }}>
+                    <h3 style={{ fontWeight: 800, color: '#1A0500', marginBottom: 4, transition: 'color 0.2s' }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#FF4D00'}
+                      onMouseLeave={e => e.currentTarget.style.color = '#1A0500'}
+                    >
+                      {p.name}
+                    </h3>
+                  </Link>
                   <p style={{ color: '#aaa', fontSize: '0.8rem', marginBottom: 12 }}>{p.desc}</p>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#FF4D00' }}>From ৳{p.price}</span>
-                    <Link to="/build" style={{ background: 'linear-gradient(135deg,#FF4D00,#FF8C42)', color: '#fff', padding: '8px 18px', borderRadius: 25, fontSize: '0.82rem', fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 14px rgba(255,77,0,0.3)' }}>
-                      Customize →
-                    </Link>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                    <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#FF4D00' }}>৳{p.price}</span>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <Link to={`/pizza/${p._id || i + 1}`} style={{ border: '1.5px solid #EDE0D8', color: '#666', padding: '7px 11px', borderRadius: 20, fontSize: '0.78rem', fontWeight: 700, textDecoration: 'none', transition: 'all 0.2s' }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = '#FF4D00'; e.currentTarget.style.color = '#FF4D00' }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = '#EDE0D8'; e.currentTarget.style.color = '#666' }}
+                      >
+                        Details
+                      </Link>
+                      <Link to="/build" style={{ background: 'linear-gradient(135deg,#FF4D00,#FF8C42)', color: '#fff', padding: '7px 13px', borderRadius: 20, fontSize: '0.78rem', fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 14px rgba(255,77,0,0.3)' }}>
+                        Customize →
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -10,6 +10,7 @@ import VerifyEmail from './pages/VerifyEmail'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import PizzaBuilder from './pages/PizzaBuilder'
+import PizzaDetails from './pages/PizzaDetails'
 import OrderSummary from './pages/OrderSummary'
 import OrderHistory from './pages/OrderHistory'
 import Profile from './pages/Profile'
@@ -41,6 +42,7 @@ function App() {
           {/* Public */}
           <Route path="/" element={<Home />} />
           <Route path="/menu" element={<Menu />} />
+          <Route path="/pizza/:id" element={<PizzaDetails />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />

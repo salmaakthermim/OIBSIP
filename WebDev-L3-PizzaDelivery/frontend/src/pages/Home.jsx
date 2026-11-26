@@ -1004,7 +1004,7 @@ export default function Home() {
               }}
             >
               {/* Pizza Image with Badges */}
-              <div style={{ position: 'relative', height: 210, overflow: 'hidden' }}>
+              <Link to={`/pizza/${pizza._id}`} style={{ display: 'block', position: 'relative', height: 210, overflow: 'hidden', textDecoration: 'none' }}>
                 <img
                   src={pizza.image}
                   alt={pizza.name}
@@ -1035,14 +1035,19 @@ export default function Home() {
                 }}>
                   ⭐ {pizza.rating}
                 </div>
-              </div>
+              </Link>
 
               {/* Pizza Info */}
               <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
-                  <h3 style={{ fontWeight: 800, color: '#1A0500', fontSize: '1.2rem', marginBottom: 6 }}>
-                    {pizza.name}
-                  </h3>
+                  <Link to={`/pizza/${pizza._id}`} style={{ textDecoration: 'none' }}>
+                    <h3 style={{ fontWeight: 800, color: '#1A0500', fontSize: '1.2rem', marginBottom: 6, transition: 'color 0.2s' }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#FF4D00'}
+                      onMouseLeave={e => e.currentTarget.style.color = '#1A0500'}
+                    >
+                      {pizza.name}
+                    </h3>
+                  </Link>
                   <p style={{ color: '#777', fontSize: '0.84rem', lineHeight: 1.5, marginBottom: 14 }}>
                     {pizza.desc}
                   </p>
@@ -1066,7 +1071,7 @@ export default function Home() {
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     <Link
-                      to="/menu"
+                      to={`/pizza/${pizza._id}`}
                       style={{
                         textAlign: 'center',
                         padding: '9px',
@@ -1081,7 +1086,7 @@ export default function Home() {
                       onMouseEnter={e => { e.currentTarget.style.borderColor = '#FF4D00'; e.currentTarget.style.color = '#FF4D00' }}
                       onMouseLeave={e => { e.currentTarget.style.borderColor = '#EDE0D8'; e.currentTarget.style.color = '#666' }}
                     >
-                      View Details
+                      View Details →
                     </Link>
                     <Link
                       to="/build"

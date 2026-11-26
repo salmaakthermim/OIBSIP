@@ -8,7 +8,7 @@ export default function OrderSummary() {
   const { state } = useLocation()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [quantity, setQuantity] = useState(1)
+  const [quantity, setQuantity] = useState(state?.quantity || 1)
   const [address, setAddress] = useState('')
   const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
@@ -106,8 +106,15 @@ export default function OrderSummary() {
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '2rem 1rem' }}>
         {/* Pizza Details */}
         <div style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.07)', marginBottom: 20 }}>
-          <div style={{ background: 'linear-gradient(135deg,#FF4D00,#FF8C42)', padding: '16px 24px' }}>
-            <h3 style={{ color: '#fff', fontWeight: 900, margin: 0, fontSize: '1.1rem' }}>🍕 Your Custom Pizza</h3>
+          <div style={{ background: 'linear-gradient(135deg,#FF4D00,#FF8C42)', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+            <h3 style={{ color: '#fff', fontWeight: 900, margin: 0, fontSize: '1.1rem' }}>
+              🍕 {state?.pizzaName || 'Your Custom Pizza'}
+            </h3>
+            {state?.pizzaSize && (
+              <span style={{ background: 'rgba(255,255,255,0.22)', color: '#fff', fontSize: '0.78rem', fontWeight: 800, padding: '4px 10px', borderRadius: 20 }}>
+                {state.pizzaSize}
+              </span>
+            )}
           </div>
           <div style={{ padding: '20px 24px' }}>
             {rows.map(({ label, item }, i) => item && (
@@ -172,9 +179,9 @@ export default function OrderSummary() {
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <Link to="/build" style={{ flex: 1, textAlign: 'center', padding: '14px', borderRadius: 12, border: '2px solid #EDE0D8', background: '#fff', color: '#888', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            ← Modify Pizza
-          </Link>
+          <button onClick={() => navigate(-1)} style={{ flex: 1, textAlign: 'center', padding: '14px', borderRadius: 12, border: '2px solid #EDE0D8', background: '#fff', color: '#888', fontWeight: 700, fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            ← Back / Modify
+          </button>
           <button onClick={handlePay} disabled={loading} style={{ flex: 2, padding: '14px', borderRadius: 12, border: 'none', background: loading ? '#ccc' : 'linear-gradient(135deg,#FF4D00,#FF8C42)', color: '#fff', fontWeight: 800, fontSize: '1rem', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 6px 24px rgba(255,77,0,0.35)' }}>
             {loading ? 'Processing...' : `Confirm & Pay ৳${finalTotal} 💳`}
           </button>
