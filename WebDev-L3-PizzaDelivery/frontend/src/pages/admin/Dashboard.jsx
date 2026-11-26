@@ -59,7 +59,8 @@ export default function AdminDashboard() {
   // Real-time updates via Socket.IO
   useEffect(() => {
     if (!user || !isAdmin) return
-    const socket = io('http://localhost:5000')
+    const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+    const socket = io(socketUrl, { transports: ['websocket', 'polling'] })
 
     socket.on('newOrder', (newOrder) => {
       toast('🔔 New Order Received #' + newOrder._id.slice(-6).toUpperCase(), {

@@ -30,7 +30,8 @@ export default function OrderHistory() {
     fetchOrders()
 
     // Real-time updates via Socket.IO
-    const socket = io('http://localhost:5000')
+    const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+    const socket = io(socketUrl, { transports: ['websocket', 'polling'] })
     socket.on('orderStatusUpdate', ({ orderId, status, order }) => {
       setOrders(prev => {
         const match = prev.find(o => o._id === orderId)

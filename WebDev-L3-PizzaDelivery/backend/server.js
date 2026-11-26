@@ -13,20 +13,28 @@ import { seedDatabase } from './src/utils/seedData.js';
 import { startStockCheckJob } from './src/jobs/stockCheck.js';
 
 dotenv.config();
-connectDB().then(() => seedDatabase());
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST'],
+    origin: '*',
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
   },
 });
 
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173' }));
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
+
+// Ensure DB is connected before processing requests
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
+// Seed DB on startup if needed
+connectDB().then(() => seedDatabase());
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -50,4 +58,8 @@ app.set('io', io);
 startStockCheckJob();
 
 const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+if (!process.env.VERCEL) {
+  httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+export default app;
