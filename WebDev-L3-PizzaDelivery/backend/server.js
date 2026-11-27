@@ -11,6 +11,7 @@ import ingredientRoutes from './src/routes/ingredientRoutes.js';
 import adminRoutes from './src/routes/adminRoutes.js';
 import { seedDatabase } from './src/utils/seedData.js';
 import { startStockCheckJob } from './src/jobs/stockCheck.js';
+import User from './src/models/User.js';
 
 dotenv.config();
 
@@ -43,6 +44,18 @@ app.use('/api/ingredients', ingredientRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Safe users endpoint (excludes passwords and private tokens)
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('-password -emailVerificationToken -resetPasswordToken')
+      .sort('-createdAt');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 app.get('/', (req, res) => {
   res.json({
     status: 'ok',
@@ -51,6 +64,12 @@ app.get('/', (req, res) => {
       health: '/api/health',
       pizzas: '/api/pizzas',
       ingredients: '/api/ingredients',
+      users: '/api/users',
+      auth: {
+        register: 'POST /api/auth/register',
+        login: 'POST /api/auth/login',
+        me: 'GET /api/auth/me',
+      },
     },
   });
 });
